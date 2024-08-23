@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Converter</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .card {
+            border-radius: 15px;
+        }
+        .card-body {
+            padding: 2rem;
+        }
+        .form-control-file {
+            border: 1px solid #ced4da;
+            border-radius: .25rem;
+        }
+        .img-preview {
+            max-width: 100%;
+            border-radius: .25rem;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #004085;
+        }
+    </style>
+</head>
+<body>
+    <div class="container d-flex justify-content-center align-items-center min-vh-100">
+        <div class="card shadow-lg">
+            <div class="card-body">
+                <h1 class="card-title text-center mb-4">Image Converter</h1>
+                <form id="imageForm" action="/convert" method="POST" enctype="multipart/form-data">
+                    <div class="form-group text-center">
+                        <input type="file" id="imageUpload" name="imageUpload" accept="image/*" required class="form-control-file mb-4">
+                        <img id="imagePreview" src="#" alt="Image Preview" class="img-preview d-none mb-4"/>
+                    </div>
+                    <div class="form-group">
+                        <label for="formatSelect">Convert to:</label>
+                        <select id="formatSelect" name="formatSelect" class="form-control">
+                            <option value="jpg">JPG</option>
+                            <option value="png">PNG</option>
+                            <option value="gif">GIF</option>
+                            <option value="bmp">BMP</option>
+                            <option value="tiff">TIFF</option>
+                            <option value="webp">WEBP</option>
+                        </select>
+                    </div>
+                    <div class="text-center">
+                        <button type="submit" id="convertBtn" class="btn btn-primary">Convert</button>
+                    </div>
+                </form>
+                <!-- <a id="downloadLink" href="#" download class="d-block text-center text-primary mt-3 d-none">Download Converted Image</a> -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Image preview functionality
+        document.getElementById('imageUpload').addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                const reader = new FileReader();
+                document.getElementById('imagePreview').style.display = "block";
+                reader.onload = function(e) {
+                    document.getElementById('imagePreview').src = e.target.result;
+                }
+                reader.readAsDataURL(file);
+            } else {
+                document.getElementById('imagePreview').style.display = "none";
+            }
+        });
+    </script>
+</body>
+</html>
