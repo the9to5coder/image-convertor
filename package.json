@@ -12,3 +12,7 @@
     "sharp": "^0.30.7"
   }
 }
+
+"scripts": {
+  "start": "node app.js"
+}
