@@ -5,6 +5,7 @@ const path = require('path');
 const fs = require('fs');
 
 const app = express();
+const port = process.env.PORT || 3000;
 
 // Set storage engine for Multer
 const storage = multer.diskStorage({
@@ -17,7 +18,7 @@ const storage = multer.diskStorage({
 // Initialize upload
 const upload = multer({
     storage: storage,
-    limits: { fileSize: 10000000 }, // 10MB limit
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
     fileFilter: function (req, file, cb) {
         checkFileType(file, cb);
     }
@@ -38,46 +39,48 @@ function checkFileType(file, cb) {
 
 // Serve static files from the public directory
 app.use(express.static('public'));
+app.use('/converted', express.static('converted'));
 
 // Home route
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
-// Image upload and conversion route
 app.post('/convert', (req, res) => {
     upload(req, res, (err) => {
         if (err) {
-            res.send(err);
-        } else {
-            if (req.file == undefined) {
-                res.send('Error: No File Selected!');
-            } else {
-                const format = req.body.formatSelect;
-                const outputPath = `./converted/${req.file.filename.split('.')[0]}.${format}`;
-
-                sharp(req.file.path)
-                    .toFormat(format)
-                    .toFile(outputPath, (err, info) => {
-                        if (err) {
-                            res.send('Error during conversion!');
-                        } else {
-                            // Delete the uploaded file after conversion
-                            fs.unlinkSync(req.file.path);
-                            // Send the converted file for download
-                            res.download(outputPath, (err) => {
-                                if (err) {
-                                    res.send('Error during download!');
-                                } else {
-                                    // Delete the converted file after sending it
-                                    fs.unlinkSync(outputPath);
-                                }
-                            });
-                        }
-                    });
-            }
+            console.error('Multer error:', err);
+            return res.status(400).json({ error: 'File upload error', details: err.message });
         }
+
+        if (!req.file) {
+            console.log('No file selected');
+            return res.status(400).json({ error: 'No file selected' });
+        }
+
+        const format = req.body.formatSelect;
+        const outputPath = path.join(__dirname, 'converted', `${req.file.filename.split('.')[0]}.${format}`);
+
+        sharp(req.file.path)
+            .toFormat(format)
+            .toFile(outputPath, (err, info) => {
+                if (err) {
+                    console.error('Sharp conversion error:', err);
+                    return res.status(500).json({ error: 'Error during conversion', details: err.message });
+                }
+
+                // Delete the uploaded file after conversion
+                fs.unlink(req.file.path, (err) => {
+                    if (err) console.error('Error deleting uploaded file:', err);
+                });
+
+                // Send the converted file for download
+                res.json({
+                    message: 'File converted successfully!',
+                    fileUrl: `/converted/${path.basename(outputPath)}`
+                });
+            });
     });
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
